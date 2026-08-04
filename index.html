@@ -9,8 +9,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#131210" media="(prefers-color-scheme: dark)">
-<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIuOBiumHo+OCiuioiOeulyAtIOODmeODiOODiuODoOaXheihjOeUqCIsICJzaG9ydF9uYW1lIjogIuOBiumHo+OCiuioiOeulyIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjVmM2VlIiwgInRoZW1lX2NvbG9yIjogIiMyZjdhNmIiLCAibGFuZyI6ICJqYSJ9">
+<link rel="manifest" href="manifest.json">
 <title>お釣り計算 - ベトナム旅行用</title>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+</script>
 </head>
 <body>
 <style>
