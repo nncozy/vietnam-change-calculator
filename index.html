@@ -157,6 +157,16 @@
     font-size: 12.5px;
     font-weight: 700;
   }
+  .icon-btn .chevron {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+  }
+  .icon-btn[aria-expanded="true"] .chevron {
+    transform: rotate(180deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .icon-btn .chevron { transition: none; }
+  }
 
   .panel {
     background: var(--surface);
@@ -395,7 +405,7 @@
     <h1>お釣り計算<span class="subtitle">ベトナム旅行用（円・チャット同時換算）</span></h1>
     <div class="topbar-actions">
       <button id="themeToggle" class="icon-btn" aria-label="テーマ切替">🌙</button>
-      <button id="settingsToggle" class="icon-btn labeled" aria-label="レート設定を開く" aria-expanded="false">⚙<span class="btn-label">レート</span></button>
+      <button id="settingsToggle" class="icon-btn labeled" aria-label="レート設定を開く" aria-expanded="false">⚙<span class="btn-label">レート</span><span class="chevron" aria-hidden="true">▾</span></button>
     </div>
   </header>
 
