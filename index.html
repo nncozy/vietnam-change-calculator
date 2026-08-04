@@ -146,27 +146,6 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  .icon-btn.labeled {
-    width: auto;
-    padding: 0 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .icon-btn.labeled .btn-label {
-    font-size: 12.5px;
-    font-weight: 700;
-  }
-  .icon-btn .chevron {
-    font-size: 10px;
-    transition: transform 0.2s ease;
-  }
-  .icon-btn[aria-expanded="true"] .chevron {
-    transform: rotate(180deg);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .icon-btn .chevron { transition: none; }
-  }
 
   .panel {
     background: var(--surface);
@@ -186,7 +165,41 @@
     font-weight: 800;
   }
 
-  .rates-panel[hidden] { display: none; }
+  .rates-toggle {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    padding: 0;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+  }
+  .rates-toggle .chevron {
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+  }
+  .rates-toggle[aria-expanded="true"] .chevron {
+    transform: rotate(180deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rates-toggle .chevron { transition: none; }
+  }
+
+  .rates-body[hidden] { display: none; }
+  .rates-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
   .rates-panel .note {
     font-size: 12.5px;
@@ -403,17 +416,19 @@
 <div class="app">
   <header class="topbar">
     <h1>お釣り計算<span class="subtitle">ベトナム旅行用（円・チャット同時換算）</span></h1>
-    <div class="topbar-actions">
-      <button id="themeToggle" class="icon-btn" aria-label="テーマ切替">🌙</button>
-      <button id="settingsToggle" class="icon-btn labeled" aria-label="レート設定を開く" aria-expanded="false">⚙<span class="btn-label">レート</span><span class="chevron" aria-hidden="true">▾</span></button>
-    </div>
+    <button id="themeToggle" class="icon-btn" aria-label="テーマ切替">🌙</button>
   </header>
 
-  <section class="panel rates-panel" id="ratesPanel" hidden>
-    <h2>為替レート設定</h2>
-    <p class="note">目安レートです。出発前に必ず現地の実勢レートに直してください。ミャンマーは公定レートと実勢レートの差が大きいので特に注意してください。</p>
-    <label>1 ドン = <input type="number" id="rateJpy" inputmode="decimal" step="0.0001" min="0"> 円 <span class="hint-inline" id="rateJpyHint"></span></label>
-    <label>1 ドン = <input type="number" id="rateMmk" inputmode="decimal" step="0.001" min="0"> チャット <span class="hint-inline" id="rateMmkHint"></span></label>
+  <section class="panel rates-panel" id="ratesPanel">
+    <button class="rates-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="ratesBody">
+      <span>為替レートを設定</span>
+      <span class="chevron" aria-hidden="true">▾</span>
+    </button>
+    <div class="rates-body" id="ratesBody" hidden>
+      <p class="note">目安レートです。出発前に必ず現地の実勢レートに直してください。ミャンマーは公定レートと実勢レートの差が大きいので特に注意してください。</p>
+      <label>1 ドン = <input type="number" id="rateJpy" inputmode="decimal" step="0.0001" min="0"> 円 <span class="hint-inline" id="rateJpyHint"></span></label>
+      <label>1 ドン = <input type="number" id="rateMmk" inputmode="decimal" step="0.001" min="0"> チャット <span class="hint-inline" id="rateMmkHint"></span></label>
+    </div>
   </section>
 
   <section class="panel total-panel">
@@ -487,7 +502,7 @@
     var els = {
       themeToggle: document.getElementById("themeToggle"),
       settingsToggle: document.getElementById("settingsToggle"),
-      ratesPanel: document.getElementById("ratesPanel"),
+      ratesBody: document.getElementById("ratesBody"),
       rateJpy: document.getElementById("rateJpy"),
       rateMmk: document.getElementById("rateMmk"),
       rateJpyHint: document.getElementById("rateJpyHint"),
@@ -688,9 +703,9 @@
     });
 
     els.settingsToggle.addEventListener("click", function () {
-      var isHidden = els.ratesPanel.hasAttribute("hidden");
-      if (isHidden) els.ratesPanel.removeAttribute("hidden");
-      else els.ratesPanel.setAttribute("hidden", "");
+      var isHidden = els.ratesBody.hasAttribute("hidden");
+      if (isHidden) els.ratesBody.removeAttribute("hidden");
+      else els.ratesBody.setAttribute("hidden", "");
       els.settingsToggle.setAttribute("aria-expanded", String(isHidden));
     });
 
