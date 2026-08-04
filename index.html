@@ -103,7 +103,7 @@
   .app {
     width: 100%;
     max-width: 460px;
-    padding: 16px 14px 32px;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 14px calc(32px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 12px;
