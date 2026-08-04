@@ -307,11 +307,23 @@
     background: var(--surface-alt);
     color: var(--text);
     border-radius: 12px;
-    height: 52px;
-    font-size: 16px;
-    font-weight: 800;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
     font-variant-numeric: tabular-nums;
     cursor: pointer;
+  }
+  .bill-grid .bill-amount {
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .bill-grid .bill-jpy {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
   }
   .bill-grid button:active { transform: translateY(1px); }
 
@@ -492,6 +504,7 @@
     var THEME_KEY = "vn-change-calc-theme-v1";
 
     var BILLS_VND = [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000];
+    var billJpyEls = {};
 
     var state = {
       totalRaw: "",
@@ -580,10 +593,21 @@
 
     function renderBillGrid() {
       els.billGrid.innerHTML = "";
+      billJpyEls = {};
       BILLS_VND.forEach(function (denom) {
         var btn = document.createElement("button");
         btn.type = "button";
-        btn.textContent = "+" + fmt(denom);
+
+        var amountEl = document.createElement("span");
+        amountEl.className = "bill-amount";
+        amountEl.textContent = "+" + fmt(denom);
+        btn.appendChild(amountEl);
+
+        var jpyEl = document.createElement("span");
+        jpyEl.className = "bill-jpy";
+        btn.appendChild(jpyEl);
+        billJpyEls[denom] = jpyEl;
+
         btn.addEventListener("click", function () {
           state.paidTaps.push(denom);
           renderDynamic();
@@ -606,6 +630,10 @@
       els.totalNum.textContent = fmt(total);
       els.totalJpy.textContent = fmt(Math.round(toJpy(total)));
       els.totalMmk.textContent = fmt(Math.round(toMmk(total)));
+
+      BILLS_VND.forEach(function (denom) {
+        billJpyEls[denom].textContent = "約" + fmt(Math.round(toJpy(denom))) + "円";
+      });
 
       els.paidTotal.textContent = fmt(paid);
 
