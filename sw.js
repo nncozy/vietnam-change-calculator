@@ -25,6 +25,7 @@ self.addEventListener("activate", function (event) {
 
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
+  var isNavigation = event.request.mode === "navigate";
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       var fetchPromise = fetch(event.request)
@@ -37,7 +38,11 @@ self.addEventListener("fetch", function (event) {
           }
           return networkResponse;
         })
-        .catch(function () { return cached; });
+        .catch(function () {
+          if (cached) return cached;
+          if (isNavigation) return caches.match("./index.html");
+          return cached;
+        });
       return cached || fetchPromise;
     })
   );
