@@ -461,7 +461,10 @@
 <div class="app">
   <header class="topbar">
     <h1>お釣り計算<span class="subtitle">ベトナム旅行用（円・チャット同時換算）</span></h1>
-    <button id="themeToggle" class="icon-btn" aria-label="テーマ切替">🌙</button>
+    <div class="topbar-actions">
+      <button id="updateBtn" class="icon-btn" aria-label="最新版に更新" title="最新版に更新">⟳</button>
+      <button id="themeToggle" class="icon-btn" aria-label="テーマ切替">🌙</button>
+    </div>
   </header>
 
   <section class="panel rates-panel" id="ratesPanel">
@@ -581,6 +584,7 @@
       rateMmk: document.getElementById("rateMmk"),
       rateJpyHint: document.getElementById("rateJpyHint"),
       rateMmkHint: document.getElementById("rateMmkHint"),
+      updateBtn: document.getElementById("updateBtn"),
       currencySwitch: document.getElementById("currencySwitch"),
       totalFlag: document.getElementById("totalFlag"),
       totalLabel: document.getElementById("totalLabel"),
@@ -866,6 +870,24 @@
       document.documentElement.setAttribute("data-theme", next);
       try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
       refreshThemeIcon();
+    });
+
+    els.updateBtn.addEventListener("click", function () {
+      els.updateBtn.disabled = true;
+      els.updateBtn.textContent = "…";
+      var clearCaches = ("caches" in window)
+        ? caches.keys().then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); })
+        : Promise.resolve();
+      var unregisterSw = ("serviceWorker" in navigator)
+        ? navigator.serviceWorker.getRegistrations().then(function (regs) {
+            return Promise.all(regs.map(function (r) { return r.unregister(); }));
+          })
+        : Promise.resolve();
+      Promise.all([clearCaches, unregisterSw]).then(function () {
+        location.reload();
+      }).catch(function () {
+        location.reload();
+      });
     });
 
     document.addEventListener("keydown", function (e) {
