@@ -30,6 +30,7 @@
     --accent: #2f7a6b;
     --jpy: #45538c;
     --mmk: #a9821f;
+    --vnd: #b0432c;
     --danger: #b3261e;
     --border: rgba(30, 28, 24, 0.14);
     --key-bg: #ffffff;
@@ -47,6 +48,7 @@
       --accent: #5cb3a0;
       --jpy: #8291c9;
       --mmk: #e0bd57;
+      --vnd: #e08066;
       --danger: #ef5350;
       --border: rgba(241, 237, 228, 0.16);
       --key-bg: #27241e;
@@ -64,6 +66,7 @@
     --accent: #5cb3a0;
     --jpy: #8291c9;
     --mmk: #e0bd57;
+    --vnd: #e08066;
     --danger: #ef5350;
     --border: rgba(241, 237, 228, 0.16);
     --key-bg: #27241e;
@@ -80,6 +83,7 @@
     --accent: #2f7a6b;
     --jpy: #45538c;
     --mmk: #a9821f;
+    --vnd: #b0432c;
     --danger: #b3261e;
     --border: rgba(30, 28, 24, 0.14);
     --key-bg: #ffffff;
@@ -163,6 +167,34 @@
     color: var(--text-muted);
     margin: 0;
     font-weight: 800;
+  }
+
+  .total-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .currency-switch {
+    display: flex;
+    gap: 6px;
+  }
+  .curr-btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .curr-btn.active {
+    background: var(--accent);
+    color: var(--surface);
+    border-color: var(--accent);
   }
 
   .rates-toggle {
@@ -273,6 +305,7 @@
   }
   .conv-row.jpy .num { color: var(--jpy); }
   .conv-row.mmk .num { color: var(--mmk); }
+  .conv-row.vnd .num { color: var(--vnd); }
 
   .keypad {
     display: grid;
@@ -444,12 +477,19 @@
   </section>
 
   <section class="panel total-panel">
-    <h2>商品の値段（ドン）</h2>
+    <div class="total-panel-head">
+      <h2>商品の値段</h2>
+      <div class="currency-switch" id="currencySwitch" role="group" aria-label="入力する通貨を選択">
+        <button type="button" class="curr-btn" data-currency="vnd">ドン</button>
+        <button type="button" class="curr-btn" data-currency="jpy">円</button>
+        <button type="button" class="curr-btn" data-currency="mmk">チャット</button>
+      </div>
+    </div>
     <div class="big-display">
-      <div class="row-main"><span class="sym">🇻🇳</span><span class="num" id="totalNum">0</span><span class="sym">ドン</span></div>
+      <div class="row-main"><span class="sym" id="totalFlag">🇻🇳</span><span class="num" id="totalNum">0</span><span class="sym" id="totalLabel">ドン</span></div>
       <div class="conv-rows">
-        <div class="conv-row jpy"><span class="flag">🇯🇵</span><span class="num" id="totalJpy">0</span><span class="label">円</span></div>
-        <div class="conv-row mmk"><span class="flag">🇲🇲</span><span class="num" id="totalMmk">0</span><span class="label">チャット</span></div>
+        <div class="conv-row" id="convRow1"><span class="flag" id="convFlag1"></span><span class="num" id="convNum1">0</span><span class="label" id="convLabel1"></span></div>
+        <div class="conv-row" id="convRow2"><span class="flag" id="convFlag2"></span><span class="num" id="convNum2">0</span><span class="label" id="convLabel2"></span></div>
       </div>
     </div>
     <div class="keypad" aria-label="商品の値段を入力">
@@ -502,15 +542,36 @@
   (function () {
     var RATE_KEY = "vn-change-calc-rates-v2";
     var THEME_KEY = "vn-change-calc-theme-v1";
+    var INPUT_CURRENCY_KEY = "vn-change-calc-input-currency-v1";
 
     var BILLS_VND = [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000];
     var billJpyEls = {};
 
     var state = {
       totalRaw: "",
+      inputCurrency: "vnd",
       paidTaps: [],
       rates: { jpyPerVnd: 0.0060, mmkPerVnd: 0.170 }
     };
+
+    var CURRENCIES = {
+      vnd: {
+        flag: "🇻🇳", label: "ドン",
+        toVnd: function (v) { return v; },
+        fromVnd: function (vnd) { return vnd; }
+      },
+      jpy: {
+        flag: "🇯🇵", label: "円",
+        toVnd: function (v) { return state.rates.jpyPerVnd > 0 ? v / state.rates.jpyPerVnd : 0; },
+        fromVnd: function (vnd) { return vnd * state.rates.jpyPerVnd; }
+      },
+      mmk: {
+        flag: "🇲🇲", label: "チャット",
+        toVnd: function (v) { return state.rates.mmkPerVnd > 0 ? v / state.rates.mmkPerVnd : 0; },
+        fromVnd: function (vnd) { return vnd * state.rates.mmkPerVnd; }
+      }
+    };
+    var CURRENCY_ORDER = ["vnd", "jpy", "mmk"];
 
     var els = {
       themeToggle: document.getElementById("themeToggle"),
@@ -520,9 +581,18 @@
       rateMmk: document.getElementById("rateMmk"),
       rateJpyHint: document.getElementById("rateJpyHint"),
       rateMmkHint: document.getElementById("rateMmkHint"),
+      currencySwitch: document.getElementById("currencySwitch"),
+      totalFlag: document.getElementById("totalFlag"),
+      totalLabel: document.getElementById("totalLabel"),
       totalNum: document.getElementById("totalNum"),
-      totalJpy: document.getElementById("totalJpy"),
-      totalMmk: document.getElementById("totalMmk"),
+      convRow1: document.getElementById("convRow1"),
+      convFlag1: document.getElementById("convFlag1"),
+      convLabel1: document.getElementById("convLabel1"),
+      convNum1: document.getElementById("convNum1"),
+      convRow2: document.getElementById("convRow2"),
+      convFlag2: document.getElementById("convFlag2"),
+      convLabel2: document.getElementById("convLabel2"),
+      convNum2: document.getElementById("convNum2"),
       billGrid: document.getElementById("billGrid"),
       paidTotal: document.getElementById("paidTotal"),
       paidBreakdown: document.getElementById("paidBreakdown"),
@@ -550,6 +620,16 @@
       try { localStorage.setItem(RATE_KEY, JSON.stringify(state.rates)); } catch (e) {}
     }
 
+    function loadInputCurrency() {
+      try {
+        var c = localStorage.getItem(INPUT_CURRENCY_KEY);
+        if (CURRENCIES[c]) state.inputCurrency = c;
+      } catch (e) {}
+    }
+    function saveInputCurrency() {
+      try { localStorage.setItem(INPUT_CURRENCY_KEY, state.inputCurrency); } catch (e) {}
+    }
+
     function loadTheme() {
       try {
         var t = localStorage.getItem(THEME_KEY);
@@ -568,8 +648,11 @@
       els.themeToggle.textContent = currentIsDark() ? "☀" : "🌙";
     }
 
-    function totalVnd() {
+    function totalRawValue() {
       return state.totalRaw === "" ? 0 : parseInt(state.totalRaw, 10);
+    }
+    function totalVnd() {
+      return Math.round(CURRENCIES[state.inputCurrency].toVnd(totalRawValue()));
     }
     function paidVnd() {
       return state.paidTaps.reduce(function (a, b) { return a + b; }, 0);
@@ -627,9 +710,22 @@
       var total = totalVnd();
       var paid = paidVnd();
 
-      els.totalNum.textContent = fmt(total);
-      els.totalJpy.textContent = fmt(Math.round(toJpy(total)));
-      els.totalMmk.textContent = fmt(Math.round(toMmk(total)));
+      var mainCur = CURRENCIES[state.inputCurrency];
+      els.totalFlag.textContent = mainCur.flag;
+      els.totalLabel.textContent = mainCur.label;
+      els.totalNum.textContent = fmt(totalRawValue());
+
+      var others = CURRENCY_ORDER.filter(function (k) { return k !== state.inputCurrency; });
+      var conv1 = CURRENCIES[others[0]];
+      var conv2 = CURRENCIES[others[1]];
+      els.convRow1.className = "conv-row " + others[0];
+      els.convFlag1.textContent = conv1.flag;
+      els.convLabel1.textContent = conv1.label;
+      els.convNum1.textContent = fmt(Math.round(conv1.fromVnd(total)));
+      els.convRow2.className = "conv-row " + others[1];
+      els.convFlag2.textContent = conv2.flag;
+      els.convLabel2.textContent = conv2.label;
+      els.convNum2.textContent = fmt(Math.round(conv2.fromVnd(total)));
 
       BILLS_VND.forEach(function (denom) {
         billJpyEls[denom].textContent = "約" + fmt(Math.round(toJpy(denom))) + "円";
@@ -716,6 +812,22 @@
       btn.addEventListener("click", function () { pressKey(btn.dataset.key); });
     });
 
+    function updateCurrencyButtons() {
+      els.currencySwitch.querySelectorAll(".curr-btn").forEach(function (btn) {
+        btn.classList.toggle("active", btn.dataset.currency === state.inputCurrency);
+      });
+    }
+    els.currencySwitch.querySelectorAll(".curr-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (btn.dataset.currency === state.inputCurrency) return;
+        state.inputCurrency = btn.dataset.currency;
+        state.totalRaw = "";
+        saveInputCurrency();
+        updateCurrencyButtons();
+        renderDynamic();
+      });
+    });
+
     els.undoBtn.addEventListener("click", function () {
       state.paidTaps.pop();
       renderDynamic();
@@ -765,6 +877,8 @@
     loadTheme();
     refreshThemeIcon();
     loadRates();
+    loadInputCurrency();
+    updateCurrencyButtons();
     els.rateJpy.value = state.rates.jpyPerVnd;
     els.rateMmk.value = state.rates.mmkPerVnd;
     renderRateHints();
